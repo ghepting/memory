@@ -1,0 +1,59 @@
+.card {
+  perspective: 1000px;
+  cursor: pointer;
+  margin: 0.5rem;
+  min-height: 80px;
+  min-width: 80px;
+}
+
+.disabled {
+  cursor: not-allowed;
+}
+
+.cardInner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.5s;
+  transform-style: preserve-3d;
+  border-radius: var(--border-radius-m);
+  background: rgba(var(--card-rgb), 0.1);
+  border: 1px solid rgba(var(--card-border-rgb), 0.15);
+}
+
+.card.matched .cardInner, .card.selected .cardInner {
+  transform: rotateY(180deg);
+  pointer-events: none;
+}
+
+.cardFront, .cardBack {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: var(--border-radius-m);
+  overflow: hidden;
+}
+
+.cardFront {
+  background-color: #bbb;
+  color: gray;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2rem;
+}
+
+.cardBack {
+  background-color: dodgerblue;
+  color: white;
+  transform: rotateY(180deg);
+}
+
+.card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}

@@ -1,0 +1,14 @@
+.gridS {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(25%, auto));
+}
+
+.gridL {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(20%, auto));
+}
+
+.gridXL {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(16.6666666667%, auto));
+}
