@@ -5,35 +5,15 @@ import styles from "./page.module.css";
 import MemoryCard, { MemoryCardType } from "./components/MemoryCard";
 import Status from "./components/Status";
 import MemoryGrid from "./components/MemoryGrid";
-
-interface Settings {
-  pairCount: 6 | 8 | 10 | 18; // 4x3, 4x4, 5x4, 6x6 grid sizes
-  clearSelectionTimer: number;
-}
-
-const defaultSettings: Settings = { pairCount: 6, clearSelectionTimer: 2000 }
-
-function loadSettings(): Settings {
-  if (typeof localStorage !== 'undefined') {
-    console.log('loading settings from localStorage')
-    const savedSettingsJSON = localStorage.getItem('memory-game-settings')
-    if (savedSettingsJSON) {
-      console.log('loaded settings:', savedSettingsJSON)
-      // TODO: add zod for runtime validation
-      return JSON.parse(savedSettingsJSON)
-    }
-  }
-
-  return defaultSettings
-}
-
-function saveSettings(settings: Settings) {
-  if (typeof localStorage !== 'undefined') {
-    console.log('saving settings to localStorage')
-    localStorage.setItem('memory-game-settings', JSON.stringify(settings))
-    console.log('saved settings:', loadSettings())
-  }
-}
+import { Header } from "./components/header";
+import { Footer } from "./components/footer";
+import { Dialog } from "./components/dialog";
+import {
+  Settings,
+  defaultSettings,
+  loadSettings,
+  saveSettings,
+} from "./components/settings";
 
 export default function Home() {
   const [settings, setSettings] = useState<Settings>(defaultSettings)
@@ -44,8 +24,6 @@ export default function Home() {
   const [moveCount, setMoveCount] = useState(0)
   const [isWin, setIsWin] = useState(false)
   const [isNewGameDialogOpen, setIsNewGameDialogOpen] = useState(false)
-
-  const percentage = (matchedCards.length / 2 / settings.pairCount) * 100
 
   useEffect(() => {
     setSettings(loadSettings())
@@ -114,35 +92,15 @@ export default function Home() {
 
   return (
     <main className={styles.main}>
-      {/* header */}
-      <Flex gap="4" justify="between" align="center">
-        <h2>Memory Game</h2>
-        <Flex gap="4" align="center">
-          <Status isWin={isWin} moveCount={moveCount} />
-          {isWin ? (
-            <Button onClick={reset}>
-              Play again?
-            </Button>
-          ) : (
-            <Button disabled={!moveCount} onClick={() => setIsNewGameDialogOpen(true)}>
-              New game
-            </Button>
-          )}
-        </Flex>
-        <Flex align="center" gap="2">
-          <>Difficulty</>
-          <Select.Root defaultValue="12" value={(settings.pairCount * 2).toString()} onValueChange={(value) => handleDifficultySelection(value)}>
-            <Select.Trigger variant="surface" color="blue" />
-            <Select.Content  position="popper">
-              <Select.Item value="12">Easy (4x3)</Select.Item>
-              <Select.Item value="16">Casual (4x4)</Select.Item>
-              <Select.Item value="20">Challenging (5x4)</Select.Item>
-              <Select.Item value="36">Hard (6x6)</Select.Item>
-            </Select.Content>
-          </Select.Root>
-        </Flex>
-      </Flex>
-      {/* game */}
+      <Header
+        isWin={isWin}
+        moveCount={moveCount}
+        reset={reset}
+        cardCount={settings.pairCount * 2}
+        setIsNewGameDialogOpen={setIsNewGameDialogOpen}
+        handleDifficultySelection={handleDifficultySelection}
+      />
+
       <MemoryGrid pairCount={settings.pairCount}>
         {cards.map((card, k) => (
           <MemoryCard
@@ -155,37 +113,18 @@ export default function Home() {
           />
         ))}
       </MemoryGrid>
-      {/* footer */}
-      <Flex gap="4" align="center">
-        <h4>Progress:</h4>
-        <Flex direction="column" flexGrow="1" gap="2">
-          <Progress color={isWin ? 'green' : 'blue'} value={percentage} size="3" />
-          <Flex gap="4" justify="between">
-            <h5>{percentage.toFixed(1)}%</h5>
-            <h5>({matchedCards.length / 2} of {settings.pairCount} pairs matched)</h5>
-          </Flex>
-        </Flex>
-      </Flex>
-      <AlertDialog.Root open={isNewGameDialogOpen}>
-        <AlertDialog.Content maxWidth="450px">
-          <AlertDialog.Title>Start a new game?</AlertDialog.Title>
-          <AlertDialog.Description size="2">
-            You will lose your progress. Would you like to start a new game?
-          </AlertDialog.Description>
-          <Flex gap="3" mt="4" justify="end">
-            <AlertDialog.Cancel>
-              <Button variant="soft" color="gray" onClick={() => setIsNewGameDialogOpen(false)}>
-                Cancel
-              </Button>
-            </AlertDialog.Cancel>
-            <AlertDialog.Action>
-              <Button variant="solid" onClick={reset}>
-                Start new game
-              </Button>
-            </AlertDialog.Action>
-          </Flex>
-        </AlertDialog.Content>
-      </AlertDialog.Root>
+
+      <Footer
+        isWin={isWin}
+        matchedPairsCount={matchedCards.length / 2}
+        totalPairCount={settings.pairCount}
+      />
+      
+      <Dialog
+        isNewGameDialogOpen={isNewGameDialogOpen}
+        setIsNewGameDialogOpen={setIsNewGameDialogOpen}
+        reset={reset}
+      />
     </main>
   )
 }
