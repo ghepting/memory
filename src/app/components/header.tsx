@@ -53,7 +53,7 @@ export const Header = ({
           )}
         </Flex>
         <Flex gap="4">
-          <Flex align="center" gap="2">
+          <Flex direction="column">
             <Text size="2">Difficulty</Text>
             <Select.Root defaultValue="12" value={cardCount.toString()} onValueChange={(value) => handleDifficultySelection(value)}>
               <Select.Trigger variant="surface" color="blue" />
@@ -65,7 +65,7 @@ export const Header = ({
               </Select.Content>
             </Select.Root>
           </Flex>
-          <Flex align="center" gap="2">
+          <Flex direction="column">
             <Text size="2">Theme</Text>
             <Select.Root defaultValue="cities" value={theme} onValueChange={(value: Theme) => handleThemeSelection(value)}>
               <Select.Trigger variant="surface" color="blue" />
