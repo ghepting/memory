@@ -73,6 +73,7 @@ export default function Home() {
           "Accept": "application/json",
           "Content-Type": "application/json",
         },
+        cache: "force-cache",
       },
     )
 
