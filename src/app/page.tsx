@@ -16,10 +16,12 @@ import {
   saveSettings,
 } from "./components/settings";
 import { Random } from "unsplash-js/dist/methods/photos/types";
+import { getPhotoUrls } from "@/lib/getPhotoUrls";
 
 export default function Home() {
   const [settings, setSettings] = useState<Settings>(defaultSettings)
   const [cards, setCards] = useState<MemoryCardType[]>([])
+  const [photoUrls, setPhotoUrls] = useState<string[]>([])
   const [selectedCards, setSelectedCards] = useState<MemoryCardType[]>([])
   const [matchedCards, setMatchedCards] = useState<MemoryCardType[]>([])
   const [disabled, setDisabled] = useState(false)
@@ -33,7 +35,7 @@ export default function Home() {
 
   useEffect(() => {
     reset()
-  }, [settings]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [settings, photoUrls]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     let delayedClear: NodeJS.Timeout
@@ -56,40 +58,25 @@ export default function Home() {
     }
   }, [matchedCards]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const reset = async () => {
-    let photoUrls: string[] = [];
-    const params = new URLSearchParams({
-      count: settings.pairCount.toString(),
-      query: settings.theme,
-      orientation: settings.orientation,
-      featured: "true",
-    })
-    const unsplashProxyUrl = new URL(`/api/unsplash/photos/random?${params.toString()}`, window.location.origin)
-    const response = await fetch(
-      unsplashProxyUrl,
-      {
-        method: "GET",
-        headers: {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-        },
-        cache: "force-cache",
-      },
-    )
-
-    if (response.ok) {
-      const data = await response.json()
-      if (data.error) {
-        console.error(data.error)
-        return
+  useEffect(() => {
+    async function updatePhotoUrls() {
+      const newPhotoUrls = await getPhotoUrls({
+        count: settings.pairCount,
+        query: settings.theme,
+        orientation: settings.orientation,
+      })
+      if (newPhotoUrls.length > 0) {
+        setPhotoUrls(newPhotoUrls)
+      } else {
+        // TODO: show toast notification with error message
+        console.error("Failed to fetch photo URLs")
       }
-
-      photoUrls = data.data.response.map((photo: Random) => photo.urls.regular)
-    } else {
-      // TODO: implement toast notification with error message
-      console.error(response.statusText)
     }
 
+    updatePhotoUrls()
+  }, [settings.theme, settings.pairCount, settings.orientation]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const reset = async () => {
     const cards = Array.from({ length: settings.pairCount * 2 }).map((_, k) => ({
       index: k,
       key: (k % settings.pairCount + 1).toString(),
