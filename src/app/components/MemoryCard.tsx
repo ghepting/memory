@@ -24,7 +24,7 @@ export default function MemoryCard({ card, disabled, matchedCards, selectedCards
           <StarFilledIcon />
         </div>
         <div className={styles.cardBack}>
-          <Image src={card.imageUrl} alt={card.key} width="360" height="360" />
+          <Image priority={true} src={card.imageUrl} alt={card.key} width="360" height="360" />
         </div>
       </div>
     </div>

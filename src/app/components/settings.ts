@@ -1,18 +1,32 @@
+import { Orientation } from "unsplash-js";
+
+// 4x3, 4x4, 5x4, 6x6 grid sizes
+export const VALID_PAIR_COUNTS = [6, 8, 10, 18]
+export type PairCount = 6 | 8 | 10 | 18;
+
+export type Theme = "cities" | "nature" | "travel" | "architecture" | "textures" | "animals" | "people" | "food" | "candy" | "sports" | "art";
+
 export type Settings = {
-  pairCount: 6 | 8 | 10 | 18; // 4x3, 4x4, 5x4, 6x6 grid sizes
   clearSelectionTimer: number;
+  pairCount: PairCount;
+  theme: Theme;
+  orientation: Orientation;
 }
 
-export const defaultSettings: Settings = { pairCount: 6, clearSelectionTimer: 2000 }
+export const defaultSettings: Settings = {
+  clearSelectionTimer: 2000,
+  pairCount: 6,
+  theme: "cities",
+  orientation: "landscape",
+}
 
 export function loadSettings(): Settings {
   if (typeof localStorage !== 'undefined') {
-    console.log('loading settings from localStorage')
     const savedSettingsJSON = localStorage.getItem('memory-game-settings')
     if (savedSettingsJSON) {
-      console.log('loaded settings:', savedSettingsJSON)
       // TODO: add zod for runtime validation
-      return JSON.parse(savedSettingsJSON)
+      const savedSettings = JSON.parse(savedSettingsJSON)
+      return {...defaultSettings, ...savedSettings}
     }
   }
 
@@ -21,8 +35,6 @@ export function loadSettings(): Settings {
 
 export function saveSettings(settings: Settings) {
   if (typeof localStorage !== 'undefined') {
-    console.log('saving settings to localStorage')
     localStorage.setItem('memory-game-settings', JSON.stringify(settings))
-    console.log('saved settings:', loadSettings())
   }
 }

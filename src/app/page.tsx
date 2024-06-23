@@ -10,14 +10,18 @@ import { Footer } from "./components/footer";
 import { Dialog } from "./components/dialog";
 import {
   Settings,
+  Theme,
   defaultSettings,
   loadSettings,
   saveSettings,
 } from "./components/settings";
+import { Random } from "unsplash-js/dist/methods/photos/types";
+import { getPhotoUrls } from "@/lib/getPhotoUrls";
 
 export default function Home() {
   const [settings, setSettings] = useState<Settings>(defaultSettings)
   const [cards, setCards] = useState<MemoryCardType[]>([])
+  const [photoUrls, setPhotoUrls] = useState<string[]>([])
   const [selectedCards, setSelectedCards] = useState<MemoryCardType[]>([])
   const [matchedCards, setMatchedCards] = useState<MemoryCardType[]>([])
   const [disabled, setDisabled] = useState(false)
@@ -31,7 +35,7 @@ export default function Home() {
 
   useEffect(() => {
     reset()
-  }, [settings]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [settings, photoUrls]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     let delayedClear: NodeJS.Timeout
@@ -54,11 +58,30 @@ export default function Home() {
     }
   }, [matchedCards]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const reset = () => {
+  useEffect(() => {
+    async function updatePhotoUrls() {
+      const newPhotoUrls = await getPhotoUrls({
+        count: settings.pairCount,
+        query: settings.theme,
+        orientation: settings.orientation,
+      })
+      if (newPhotoUrls.length > 0) {
+        setPhotoUrls(newPhotoUrls)
+      } else {
+        // TODO: show toast notification with error message
+        console.error("Failed to fetch photo URLs")
+      }
+    }
+
+    updatePhotoUrls()
+  }, [settings.theme, settings.pairCount, settings.orientation]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const reset = async () => {
     const cards = Array.from({ length: settings.pairCount * 2 }).map((_, k) => ({
       index: k,
       key: (k % settings.pairCount + 1).toString(),
-      imageUrl: `/photos/${k % settings.pairCount + 1}.jpg`,
+      imageUrl: photoUrls[k % settings.pairCount] ||
+        `/photos/${k % settings.pairCount + 1}.jpg`,
     }))
 
     setIsNewGameDialogOpen(false)
@@ -74,6 +97,12 @@ export default function Home() {
     const pairCount = parseInt(value) / 2
     if (pairCount !== 6 && pairCount !== 8 && pairCount !== 10 && pairCount !== 18) throw new Error('Invalid pair count')
     const newSettings: Settings = {...settings, pairCount}
+    saveSettings(newSettings)
+    setSettings(newSettings)
+  }
+
+  const handleThemeSelection = (theme: Theme) => {
+    const newSettings: Settings = {...settings, theme}
     saveSettings(newSettings)
     setSettings(newSettings)
   }
@@ -97,8 +126,10 @@ export default function Home() {
         moveCount={moveCount}
         reset={reset}
         cardCount={settings.pairCount * 2}
+        theme={settings.theme}
         setIsNewGameDialogOpen={setIsNewGameDialogOpen}
         handleDifficultySelection={handleDifficultySelection}
+        handleThemeSelection={handleThemeSelection}
       />
 
       <MemoryGrid pairCount={settings.pairCount}>
@@ -119,7 +150,7 @@ export default function Home() {
         matchedPairsCount={matchedCards.length / 2}
         totalPairCount={settings.pairCount}
       />
-      
+
       <Dialog
         isNewGameDialogOpen={isNewGameDialogOpen}
         setIsNewGameDialogOpen={setIsNewGameDialogOpen}
