@@ -10,10 +10,12 @@ import { Footer } from "./components/footer";
 import { Dialog } from "./components/dialog";
 import {
   Settings,
+  Theme,
   defaultSettings,
   loadSettings,
   saveSettings,
 } from "./components/settings";
+import { Random } from "unsplash-js/dist/methods/photos/types";
 
 export default function Home() {
   const [settings, setSettings] = useState<Settings>(defaultSettings)
@@ -54,11 +56,44 @@ export default function Home() {
     }
   }, [matchedCards]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const reset = () => {
+  const reset = async () => {
+    let photoUrls: string[] = [];
+    const params = new URLSearchParams({
+      count: settings.pairCount.toString(),
+      query: settings.theme,
+      orientation: settings.orientation,
+      featured: "true",
+    })
+    const unsplashProxyUrl = new URL(`/api/unsplash/photos/random?${params.toString()}`, window.location.origin)
+    const response = await fetch(
+      unsplashProxyUrl,
+      {
+        method: "GET",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+        },
+      },
+    )
+
+    if (response.ok) {
+      const data = await response.json()
+      if (data.error) {
+        console.error(data.error)
+        return
+      }
+
+      photoUrls = data.data.response.map((photo: Random) => photo.urls.regular)
+    } else {
+      // TODO: implement toast notification with error message
+      console.error(response.statusText)
+    }
+
     const cards = Array.from({ length: settings.pairCount * 2 }).map((_, k) => ({
       index: k,
       key: (k % settings.pairCount + 1).toString(),
-      imageUrl: `/photos/${k % settings.pairCount + 1}.jpg`,
+      imageUrl: photoUrls[k % settings.pairCount] ||
+        `/photos/${k % settings.pairCount + 1}.jpg`,
     }))
 
     setIsNewGameDialogOpen(false)
@@ -74,6 +109,12 @@ export default function Home() {
     const pairCount = parseInt(value) / 2
     if (pairCount !== 6 && pairCount !== 8 && pairCount !== 10 && pairCount !== 18) throw new Error('Invalid pair count')
     const newSettings: Settings = {...settings, pairCount}
+    saveSettings(newSettings)
+    setSettings(newSettings)
+  }
+
+  const handleThemeSelection = (theme: Theme) => {
+    const newSettings: Settings = {...settings, theme}
     saveSettings(newSettings)
     setSettings(newSettings)
   }
@@ -97,8 +138,10 @@ export default function Home() {
         moveCount={moveCount}
         reset={reset}
         cardCount={settings.pairCount * 2}
+        theme={settings.theme}
         setIsNewGameDialogOpen={setIsNewGameDialogOpen}
         handleDifficultySelection={handleDifficultySelection}
+        handleThemeSelection={handleThemeSelection}
       />
 
       <MemoryGrid pairCount={settings.pairCount}>
@@ -119,7 +162,7 @@ export default function Home() {
         matchedPairsCount={matchedCards.length / 2}
         totalPairCount={settings.pairCount}
       />
-      
+
       <Dialog
         isNewGameDialogOpen={isNewGameDialogOpen}
         setIsNewGameDialogOpen={setIsNewGameDialogOpen}
